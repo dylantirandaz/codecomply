@@ -25,6 +25,12 @@ export function Header() {
             Compliance Check
           </Link>
           <Link
+            href="/docs"
+            className="text-[13px] tracking-wide text-stone-500 transition-colors hover:text-stone-900"
+          >
+            API Docs
+          </Link>
+          <Link
             href="/check"
             className="border border-stone-900 bg-stone-900 px-4 py-2 text-[12px] font-medium uppercase tracking-wider text-stone-50 transition-colors hover:bg-stone-800"
           >
