@@ -1,8 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PDFParse } from "pdf-parse";
 import { callClaude } from "@/lib/anthropic";
+import { rateLimit, getClientIp } from "@/lib/rate-limit";
+
+// 5 PDF uploads per minute per IP
+const RATE_LIMIT = { maxRequests: 5, windowMs: 60 * 1000 };
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(getClientIp(request.headers), RATE_LIMIT);
+  if (limited) return limited;
+
   try {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
@@ -54,11 +61,10 @@ ${pdfText}`;
 
     const response = await callClaude(prompt);
 
-    // Extract JSON from the response
     const jsonMatch = response.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return NextResponse.json(
-        { error: "Could not extract data from PDF", rawText: pdfText.slice(0, 500) },
+        { error: "Could not extract data from PDF" },
         { status: 422 }
       );
     }
@@ -69,10 +75,7 @@ ${pdfText}`;
   } catch (error) {
     console.error("PDF upload failed:", error);
     return NextResponse.json(
-      {
-        error: "PDF processing failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-      },
+      { error: "PDF processing failed. Please try again later." },
       { status: 500 }
     );
   }
